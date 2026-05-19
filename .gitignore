@@ -1,21 +1,29 @@
-```
+# Examples 1:
+(empty — output nothing)
+
+# Example 2 (Project with artifacts):
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
+dist/
+build/
 # Dependencies
+.venv/
+venv/
 node_modules/
-
-# Logs
+# Logs and temp files
 *.log
-server.log
-
-# Environment variables
+*.tmp
+*.swp
+# Environment
 .env
 .env.local
 .env.*
+# Editors
+.vscode/
+.idea/
 
-# Package manager
-package-lock.json
-
-# Build outputs
-dist/
-build/
-target/
-```
+# Original rules preserved
+*.log
