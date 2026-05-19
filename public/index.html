@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Photobooth</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            margin: 10px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            width: 80%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #lobbyCodeInput {
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1.2em;
+            text-align: center;
+            margin: 20px 0;
+            width: 80%;
+            text-transform: uppercase;
+        }
+
+        .lobby-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .member-count {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .member-count.full {
+            color: #dc3545;
+        }
+
+        .members-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .member-icon {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 50%;
+            font-size: 1.5em;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            aspect-ratio: 1;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .video-container {
+            position: relative;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            aspect-ratio: 4/3;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        .countdown {
+            font-size: 5em;
+            color: #667eea;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .photo-strip {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .photo-frame {
+            border: 15px solid #333;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .theme-valentines {
+            border-color: #ff6b6b;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+        }
+
+        .theme-christmas {
+            border-color: #2d5016;
+            background: linear-gradient(135deg, #2d5016 0%, #4a7c23 100%);
+        }
+
+        .theme-birthday {
+            border-color: #ffd700;
+            background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
+        }
+
+        .theme-summer {
+            border-color: #00bcd4;
+            background: linear-gradient(135deg, #00bcd4 0%, #4dd0e1 100%);
+        }
+
+        .theme-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .theme-btn {
+            padding: 20px;
+            border: 3px solid #ddd;
+            border-radius: 15px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .theme-btn:hover, .theme-btn.selected {
+            border-color: #667eea;
+            transform: scale(1.05);
+        }
+
+        .photos-captured {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .captured-photo {
+            width: 100%;
+            border-radius: 10px;
+            border: 3px solid #667eea;
+        }
+
+        #inviteCodeDisplay {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            letter-spacing: 5px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .mic-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+        }
+
+        .error-message {
+            color: #dc3545;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #ffe6e6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Main Menu -->
+        <div id="menuScreen">
+            <h1>📸 Virtual Photobooth</h1>
+            <button class="btn" onclick="hostLobby()">Host Virtual Photobooth</button>
+            <button class="btn" onclick="showJoinForm()">Join Virtual Photobooth</button>
+        </div>
+
+        <!-- Join Form -->
+        <div id="joinScreen" class="hidden">
+            <h1>Join Lobby</h1>
+            <input type="text" id="lobbyCodeInput" placeholder="Enter Invite Code" maxlength="6">
+            <button class="btn" onclick="joinLobby()">Join</button>
+            <button class="btn" onclick="showMenu()" style="background: #6c757d;">Back</button>
+            <div id="joinError" class="error-message hidden"></div>
+        </div>
+
+        <!-- Lobby Waiting Room -->
+        <div id="lobbyScreen" class="hidden">
+            <h1>🎉 Lobby</h1>
+            <div id="inviteCodeSection" class="hidden">
+                <p>Share this code with friends:</p>
+                <div id="inviteCodeDisplay"></div>
+            </div>
+            <div class="lobby-info">
+                <div class="member-count" id="memberCount">1/4</div>
+                <p>Members in lobby</p>
+            </div>
+            <div class="members-grid" id="membersGrid"></div>
+            <button class="btn" id="startBtn" onclick="startPhotobooth()" disabled>Start Photobooth</button>
+            <button class="btn" onclick="leaveLobby()" style="background: #dc3545;">Leave Lobby</button>
+        </div>
+
+        <!-- Photobooth Capture Screen -->
+        <div id="captureScreen" class="hidden">
+            <h1>📷 Get Ready!</h1>
+            <div class="video-grid" id="videoGrid"></div>
+            <div id="countdown" class="countdown hidden"></div>
+            <div id="photoPreview" class="photos-captured hidden"></div>
+        </div>
+
+        <!-- Frame Selection Screen -->
+        <div id="frameScreen" class="hidden">
+            <h1>🖼️ Choose Your Frame</h1>
+            <div class="photos-captured" id="finalPhotos"></div>
+            <div class="theme-selector">
+                <div class="theme-btn" onclick="selectTheme('valentines')">
+                    <h3>💕 Valentines</h3>
+                </div>
+                <div class="theme-btn" onclick="selectTheme('christmas')">
+                    <h3>🎄 Christmas</h3>
+                </div>
+                <div class="theme-btn" onclick="selectTheme('birthday')">
+                    <h3>🎂 Birthday</h3>
+                </div>
+                <div class="theme-btn" onclick="selectTheme('summer')">
+                    <h3>☀️ Summer</h3>
+                </div>
+            </div>
+            <button class="btn" onclick="downloadStrip()">⬇️ Download Strip</button>
+        </div>
+
+        <!-- Final Screen -->
+        <div id="finalScreen" class="hidden">
+            <h1>🎊 Thanks for playing!</h1>
+            <p>Your photobooth strip has been downloaded.</p>
+            <button class="btn" onclick="location.reload()">Create New Session</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let currentLobbyCode = null;
+        let isHost = false;
+        let localStream = null;
+        let capturedPhotos = [];
+        let selectedTheme = null;
+
+        // Screen navigation
+        function showScreen(screenId) {
+            document.querySelectorAll('.container > div').forEach(div => {
+                if (div.id !== screenId) div.classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function showMenu() {
+            showScreen('menuScreen');
+        }
+
+        function showJoinForm() {
+            showScreen('joinScreen');
+            document.getElementById('joinError').classList.add('hidden');
+        }
+
+        // Host lobby
+        async function hostLobby() {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: true, 
+                    audio: true 
+                });
+                isHost = true;
+                socket.emit('host-lobby');
+                socket.emit('enable-mic');
+            } catch (err) {
+                alert('Camera/Microphone access required!');
+                console.error(err);
+            }
+        }
+
+        // Join lobby
+        async function joinLobby() {
+            const code = document.getElementById('lobbyCodeInput').value.trim().toUpperCase();
+            if (!code) {
+                document.getElementById('joinError').textContent = 'Please enter a code';
+                document.getElementById('joinError').classList.remove('hidden');
+                return;
+            }
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: true, 
+                    audio: true 
+                });
+                socket.emit('join-lobby', { lobbyCode: code });
+                socket.emit('enable-mic');
+            } catch (err) {
+                alert('Camera/Microphone access required!');
+                console.error(err);
+            }
+        }
+
+        // Socket events
+        socket.on('lobby-created', ({ lobbyCode }) => {
+            currentLobbyCode = lobbyCode;
+            document.getElementById('inviteCodeDisplay').textContent = lobbyCode;
+            document.getElementById('inviteCodeSection').classList.remove('hidden');
+            showScreen('lobbyScreen');
+        });
+
+        socket.on('lobby-joined', ({ lobbyCode }) => {
+            currentLobbyCode = lobbyCode;
+            showScreen('lobbyScreen');
+        });
+
+        socket.on('lobby-update', ({ members, count, max }) => {
+            const countEl = document.getElementById('memberCount');
+            countEl.textContent = `${count}/${max}`;
+            
+            if (count === max) {
+                countEl.classList.add('full');
+            } else {
+                countEl.classList.remove('full');
+            }
+
+            const startBtn = document.getElementById('startBtn');
+            if (isHost) {
+                startBtn.disabled = count < 2;
+            } else {
+                startBtn.classList.add('hidden');
+            }
+
+            const membersGrid = document.getElementById('membersGrid');
+            membersGrid.innerHTML = members.map((m, i) => `
+                <div class="member-icon">${m.name.charAt(0)}</div>
+            `).join('');
+        });
+
+        socket.on('error-message', ({ message }) => {
+            document.getElementById('joinError').textContent = message;
+            document.getElementById('joinError').classList.remove('hidden');
+        });
+
+        socket.on('photobooth-started', () => {
+            showScreen('captureScreen');
+            setupVideos();
+        });
+
+        socket.on('capture-photo', async ({ photoNumber }) => {
+            const countdownEl = document.getElementById('countdown');
+            countdownEl.classList.remove('hidden');
+            
+            for (let i = 3; i > 0; i--) {
+                countdownEl.textContent = i;
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            countdownEl.textContent = '📸';
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Capture photo
+            const video = document.querySelector('video');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, 0, 0);
+            
+            const photoData = canvas.toDataURL('image/jpeg');
+            capturedPhotos.push(photoData);
+            
+            socket.emit('submit-photo', { 
+                lobbyCode: currentLobbyCode, 
+                photoData, 
+                photoNumber 
+            });
+            
+            countdownEl.classList.add('hidden');
+            
+            if (photoNumber < 4) {
+                countdownEl.textContent = 'Get ready...';
+                countdownEl.classList.remove('hidden');
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                countdownEl.classList.add('hidden');
+            }
+        });
+
+        socket.on('photos-captured', () => {
+            showScreen('frameScreen');
+            displayCapturedPhotos();
+        });
+
+        socket.on('frame-applied', ({ theme, photos }) => {
+            applyFrameToStrip(theme);
+        });
+
+        socket.on('ready-for-processing', () => {
+            showScreen('frameScreen');
+            displayCapturedPhotos();
+        });
+
+        // Setup video streams
+        function setupVideos() {
+            const videoGrid = document.getElementById('videoGrid');
+            videoGrid.innerHTML = '';
+            
+            const videoEl = document.createElement('div');
+            videoEl.className = 'video-container';
+            videoEl.innerHTML = `
+                <video autoplay playsinline muted></video>
+                <div class="mic-indicator">🎤</div>
+            `;
+            videoGrid.appendChild(videoEl);
+            
+            const video = videoEl.querySelector('video');
+            video.srcObject = localStream;
+        }
+
+        // Display captured photos
+        function displayCapturedPhotos() {
+            const container = document.getElementById('finalPhotos');
+            container.innerHTML = capturedPhotos.map(photo => 
+                `<img src="${photo}" class="captured-photo">`
+            ).join('');
+        }
+
+        // Select theme
+        function selectTheme(theme) {
+            selectedTheme = theme;
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            event.target.closest('.theme-btn').classList.add('selected');
+        }
+
+        // Download strip
+        function downloadStrip() {
+            if (!selectedTheme) {
+                alert('Please select a frame theme!');
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const photoWidth = 300;
+            const photoHeight = 400;
+            const stripWidth = photoWidth + 40;
+            const stripHeight = (photoHeight * 4) + 60;
+
+            canvas.width = stripWidth;
+            canvas.height = stripHeight;
+
+            // Apply theme background
+            let gradient;
+            switch(selectedTheme) {
+                case 'valentines':
+                    gradient = ctx.createLinearGradient(0, 0, stripWidth, stripHeight);
+                    gradient.addColorStop(0, '#ff6b6b');
+                    gradient.addColorStop(1, '#ff8e8e');
+                    break;
+                case 'christmas':
+                    gradient = ctx.createLinearGradient(0, 0, stripWidth, stripHeight);
+                    gradient.addColorStop(0, '#2d5016');
+                    gradient.addColorStop(1, '#4a7c23');
+                    break;
+                case 'birthday':
+                    gradient = ctx.createLinearGradient(0, 0, stripWidth, stripHeight);
+                    gradient.addColorStop(0, '#ffd700');
+                    gradient.addColorStop(1, '#ffb347');
+                    break;
+                case 'summer':
+                    gradient = ctx.createLinearGradient(0, 0, stripWidth, stripHeight);
+                    gradient.addColorStop(0, '#00bcd4');
+                    gradient.addColorStop(1, '#4dd0e1');
+                    break;
+            }
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, stripWidth, stripHeight);
+
+            // Draw photos
+            ctx.fillStyle = 'white';
+            ctx.fillRect(20, 20, photoWidth, photoHeight * 4 + 20);
+
+            capturedPhotos.forEach((photo, i) => {
+                const img = new Image();
+                img.onload = () => {
+                    ctx.drawImage(img, 30, 30 + (i * (photoHeight + 5)), photoWidth, photoHeight);
+                    
+                    if (i === capturedPhotos.length - 1) {
+                        // Trigger download
+                        const link = document.createElement('a');
+                        link.download = `photobooth-${selectedTheme}-${Date.now()}.jpg`;
+                        link.href = canvas.toDataURL('image/jpeg', 0.9);
+                        link.click();
+                        
+                        showScreen('finalScreen');
+                    }
+                };
+                img.src = photo;
+            });
+        }
+
+        // Leave lobby
+        function leaveLobby() {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            location.reload();
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
+</body>
+</html>
