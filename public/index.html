@@ -351,9 +351,10 @@
                 isHost = true;
                 socket.emit('host-lobby');
                 socket.emit('enable-mic');
+                console.log('Hosting lobby, waiting for lobby-created event...');
             } catch (err) {
                 alert('Camera/Microphone access required!');
-                console.error(err);
+                console.error('Error accessing media devices:', err);
             }
         }
 
